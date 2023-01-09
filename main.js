@@ -1,7 +1,5 @@
-window.addEventListener('load', function(){
+function main(){
     currentUsername = localStorage.getItem('currentUsername')||'';
-
-    //if (!(this.location.href == 'index.html')) return;
     filename = 'tasks' + currentUsername;
     tasks = JSON.parse(localStorage.getItem(filename)) || [];
     const newTaskSubmit = this.document.getElementById('newTaskSubmit');
@@ -104,7 +102,7 @@ window.addEventListener('load', function(){
     })
      
 
-});
+}
 
 function DisplayList() {
     filename = 'tasks' + currentUsername;
