@@ -1,0 +1,297 @@
+:root {
+    --blue-gray: #5c9090;
+    --neutral-pink: #edcabd;
+    --warm-pink: #f7b09c;
+    --coral: #fe7d6a;
+    --earthy-orange: #e8b665;
+    --ceramic-blue: #bdcec6;
+    --tanned-pearl: #efe9db;
+    --mint: #cee9be;
+    --soft-mint: #e1f5da;
+    --pale-green: #D1E3CE;
+
+    --light-gray: #e6e9e890;
+    --gray: #808080;
+    --light-purple: #e6e6fa;
+    --blue: #5d00ff;
+    --light-blue: #004cff68;
+    --pinkish: #feeaff;
+    background-color: var(--gray);
+    flex-wrap: wrap;
+}
+
+body {
+    margin: auto;
+    width: max(70%,350px);
+    height: 100%;
+    margin-bottom: 2rem;
+    background-color: var(--ceramic-blue);
+    padding-bottom: 2%;
+    color: var(--blue-gray);
+}
+
+body input {
+    color: var(--blue-gray);
+}
+
+header {
+    margin: auto;
+    padding: 0.3rem;
+    text-align: center;
+}
+
+#signIn {
+    display: flex;
+    justify-content: right;
+}
+
+#welcome {
+    font-size: large;
+    color: var(--coral);
+    margin-right: 0.5rem;
+}
+
+#signIn a {
+    margin-left: 1rem;
+}
+
+#countText {
+    display: flex;
+    float: right;
+    width: 150px;
+    padding-right: 2%;
+    flex: 0 0 150px;
+    justify-content: right;
+    align-items: flex-end;
+}
+
+#countText p {
+    display: flex;
+    align-items: flex-end;
+    justify-content: right;
+    margin-right: 3px;
+    font-weight: 500;
+}
+
+
+
+#searchAndFilter {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 0.3rem;
+    align-items: baseline;    
+}
+
+#search {
+    flex-grow: 3;
+}
+
+#filter {
+    display: flex;
+    flex-wrap: wrap;
+    justify-items: right;
+}
+
+input[type="radio"] {
+    display: none;
+}
+
+#filter label {
+    padding: 1px;
+    width: 45px;
+    position: relative;
+    margin-left: 6px;
+    line-height: 20px;
+    background-color: var(--tanned-pearl);
+    text-align: center;
+    border: 1px solid var(--warm-pink);
+    color: white;
+}
+
+#filter input[type="radio"]:checked+label{
+    font-weight: bold;
+    color: var(--blue-gray);
+    background-color: var(--earthy-orange);
+    border: 1px solid var(--coral);
+} 
+
+
+.batchRemove {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: right;
+    padding: 0.3rem;
+}
+
+.batchRemove button:hover {
+    opacity: 1.0;
+    background-color: var(--coral);
+}
+
+button {
+    background-color: var(--tanned-pearl);
+    border: 1px solid var(--blue-gray);
+    color: var(--blue-gray);
+    opacity: 0.9;
+}
+
+button:hover {
+    opacity: 1.0;
+    background-color: var(--earthy-orange);
+}
+
+.button {
+    background-color: var(--tanned-pearl);
+    border: 1px solid var(--blue-gray);
+    color: var(--blue-gray);
+    opacity: 0.8;
+}
+
+.button:hover {
+    opacity: 1.0;
+    background-color: var(--earthy-orange);
+}
+
+.batchRemove button {
+    background-color: var(--warm-pink);
+    margin-left: 2px;
+    color: #e6e6fa;
+}
+
+.task {
+    display: flex;
+    margin-top: 0.1rem;
+    margin-bottom: 0.1rem;
+    flex-wrap: wrap; 
+    padding: 0.3rem;
+    align-items: center;
+    font-size: larger;
+}
+
+.task input[type="checkbox"] {
+    margin-left: 0;
+}
+.task div {
+    flex-grow: 3;
+}
+
+.modify {
+    display: flex;
+    float: right;
+    flex-wrap: wrap;
+    flex-grow: 0;
+    justify-content: right;
+}
+
+.doneCheck {
+    background-color: var(--mint);
+}
+
+.doneCheck:hover {
+    opacity: 1.0;
+    background-color: greenyellow;
+}
+
+.modify .edit {
+    width: 20px;
+    height: 20px;
+}
+
+.repeat {
+    background-color: var(--soft-mint);
+}
+
+.repeat:hover {
+    opacity: 1.0;
+    background-color: greenyellow;
+}
+
+.remove {
+    background-color:var(--warm-pink);
+    color: white;
+}
+
+.remove:hover {
+    opacity: 1.0;
+    background-color: var(--coral);
+}
+
+.cancel {
+    background-color:var(--warm-pink);
+    color: white;
+}
+
+.cancel:hover {
+    opacity: 1.0;
+    background-color: var(--coral);
+}
+
+.checkBox {
+    flex-grow: 0;
+}
+
+.text {
+    margin-left: 5%;
+    background-color: white;
+    border: 2px solid var(--blue-gray);
+}
+
+.text:read-only {
+    background-color: transparent;
+    border: transparent;
+    font-weight: bold;
+}
+
+.contentdone .text{
+    color: var(--pinkish);
+}
+
+.contentdone .text{
+    text-decoration: line-through;
+    font-weight: lighter;
+    color: var(--earthy-orange);
+}
+
+#pages {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    padding: 0.3rem;
+}
+
+#pages label {
+    min-width: 16px;
+    text-align: center;
+    border: 1px solid black;
+    margin-right: 6px;
+    color: white;
+    background-color: var(--soft-mint);
+}
+
+#pages input[type="radio"]:checked+label{
+    font-weight: bold;
+    color: var(--blue-gray);
+    background-color: var(--mint);
+}
+
+
+#newTask {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+#newTaskInput {
+    height: 50px;
+    width: 50%;
+    background-color: var(--pale-green);
+}
+
+.alert {
+    color: red;
+}
+
+.alertBlue {
+    color: blue;
+}

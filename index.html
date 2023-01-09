@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-do list</title>
+
+    <link rel="stylesheet" href="main.css">    
+</head>
+<body>
+    <header>
+        <div id="signIn">
+            <div id="welcome">Guest</div>
+            <a id="signInLink" href="signin.html">Sign In</a>
+            <button id="logOutButton" onclick="logOut(event)">Log out</button>
+        </div>
+        <h1>To-do List</h1>
+    </header>
+
+    <main>
+
+        <div id="searchAndFilter">
+            <form id="search">
+                <input type="search" id="searchText" name= "searchText" placeholder="Lookup tasks...">
+            </form>
+
+            <div id="countText">
+                <p id="activeText">0 to-do, </p>
+                <p id="doneText">0 done</p>
+            </div>
+
+            <form id="filter">
+                <input type="radio" id="all" name="filter" value="All" checked>
+                <label for="all">All</label><br>
+                <input type="radio" id="active" name="filter" value="Active">
+                <label for="active">Active</label><br>
+                <input type="radio" id="done" name="filter" value="Done">
+                <label for="done">Done</label>
+            </form>
+        </div>
+
+        <div class="batchRemove">
+            <button id="removeChecked">Remove checked</button>
+            <button id="removeAll">Remove all</button>
+        </div>
+
+        <section class="taskList" id="taskList" class="contentnotdone">
+            <div class="task">
+                <input type="checkbox" class="checkbox" value="Done">
+                <div>
+                    <input type="text" class="text" value="FirstTask" readonly>
+                </div>
+                <div class="modify">
+                    <button class="doneCheck">Done</button>
+                    <img src="pencil.png" alt="Edit" class="edit" class="button" style="width:20px;height:20px;">
+                    <button class="remove">Remove</button>
+                </div>
+            </div>
+        </section>
+        
+        <form id="pages">
+            <input type="radio" id="p1" name="p1" value="1" checked>
+            <label for="p1">1</label><br>
+        </form>
+
+        <div id="newTask">
+            <textarea id="newTaskInput" name= "newTaskInput" placeholder="Enter new task..." autofocus></textarea>
+            <button id="newTaskSubmit">Add</button>
+        </div>
+
+        <dialog id="confirmDialog">
+            <p>Are you sure?</p>
+            <form method="dialog">
+            <div>
+                <button class="cancel" value="cancel">Cancel</button>
+                <button id="confirmBtn" value="confirmBtn">Confirm</button>
+            </div>
+            </form>
+        </dialog>
+  
+
+    </main>
+    
+    <script src="main.js"></script>
+</body>
+</html>
