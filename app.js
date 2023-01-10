@@ -101,6 +101,14 @@ router.post("/signIn", (req,res) => {
                 return result;
             }
         );
+        const tableName = 'tasks'+userData.username;
+        con.query(
+            `CREATE TABLE IF NOT EXISTS ${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, content VARCHAR(), done BOOLEAN);`,
+            function (err,result) {
+                if (err) throw err;
+                console.log(`${username}'s to-do table initialized.`);
+            }
+        );
         res.writeHead(200,
             { 'Content-Type': 'text/plain' });
         res.write("LoggedIn");
