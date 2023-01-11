@@ -48,72 +48,66 @@ router.get('/',(req, res) => {
     res.sendFile(__dirname+'/index.html');
 });
 
-router.post("/signUp", (req,res) => {
+app.post("/register", (req,res) => {
+    console.log(req.body.fullname);
     const fullname = req.body.fullname;
     const username = req.body.username.toLowerCase();
     const password = req.body.password;
-    const matched = con.query(
-        `EXIST (SELECT 1 FROM usersData WHERE username = ${username})`,
+    res.writeHead(200,
+        { 'Content-Type': 'text/plain' });
+    con.query(
+        `SELECT * FROM usersData WHERE username = "${username}"`,
         function (err, result){
-            if (err) throw err;
-            return result;
+            if (err) {
+                console.log(err);
+                return;
+            } else {
+                if (result && result.length) {
+                    console.log(result);
+                    res.end('UserExisted');
+                } else {
+                    con.query(
+                        "INSERT INTO usersData (fullname, username, password) VALUES " +
+                        `('${fullname}', '${username}', '${password}');`,
+                        function (err) {
+                            if (err) throw err;
+                        }
+                    );
+                    res.end('UserCreated');
+                }
+            }
         }
     );
-    if (matched) {
-        res.writeHead(200,
-            { 'Content-Type': 'text/plain' });
-        res.write('UserExisted');
-    } else {
-        con.query(
-            "INSERT INTO usersData (fullname, username, password) VALUES " +
-            `(${fullname}, ${username}, ${password});`,
-            function (err) {
-                if (err) throw err;
-                console.log
-            }
-        );
-        res.writeHead(201,
-            { 'Content-Type': 'text/plain' });
-        res.write("User's record created.");
-    }
-    res.end();
 });
 
-router.post("/signIn", (req,res) => {
+app.post("/login", (req,res) => {
     const username = req.body.username.toLowerCase();
     const password = req.body.password;
-    const matched = con.query(
-        `EXIST (SELECT 1 FROM usersData WHERE username = ${username} AND password = ${password})`,
+    res.writeHead(200,
+        { 'Content-Type': 'text/plain' });
+    con.query(
+        `SELECT * FROM usersData WHERE username = '${username}' AND password = '${password}'`,
         function (err, result){
-            if (err) throw err;
-            return result;
+            if (err) {
+                console.log(err);
+            } else {
+                console.log(result);
+                if (result && result.length) {
+                    const tableName = 'tasks_'+username;
+                    con.query(
+                        `CREATE TABLE IF NOT EXISTS ${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, content VARCHAR(1023), done BOOLEAN);`,
+                        function (err,result) {
+                            if (err) throw err;
+                            console.log(`${username}'s to-do table initialized.`);
+                        }
+                    );
+                    res.end('LoggedIn');
+                } else {
+                    res.end('NotAuth');
+                }
+            }
         }
-    );
-    if (!matched) {
-        res.writeHead(403,
-            { 'Content-Type': 'text/plain' });
-        res.write('WrongPassword');
-    } else {
-        userData = con.query(
-            `SELECT 1 FROM usersData WHERE username = ${username} AND password = ${password}`,
-            function (err,result) {
-                if (err) throw err;
-                return result;
-            }
-        );
-        const tableName = 'tasks'+userData.username;
-        con.query(
-            `CREATE TABLE IF NOT EXISTS ${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, content VARCHAR(), done BOOLEAN);`,
-            function (err,result) {
-                if (err) throw err;
-                console.log(`${username}'s to-do table initialized.`);
-            }
-        );
-        res.writeHead(200,
-            { 'Content-Type': 'text/plain' });
-        res.write("LoggedIn");
-    }
-    res.end();
+    );    
 });
 
 

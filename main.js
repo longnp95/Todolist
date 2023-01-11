@@ -1,3 +1,5 @@
+const url = "http://localhost:5555"
+
 function main(){
     currentUsername = localStorage.getItem('currentUsername')||'';
     filename = 'tasks' + currentUsername;
@@ -326,6 +328,18 @@ function removeVietnameseTones(str) {
 function signIn(e){
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
+
+    $.post(url + "/login",{username: username, password: password}, function(data){
+        console.log(data);
+        if(data.toLowerCase() === 'loggedin' ) {
+            console.log("Signed In");
+        } else if(data.toLowerCase() === 'notauth' ) {
+            console.log("Incorrect username/password");
+        } else {
+            console.log("server error")
+        }
+    });
+
     const usersData = JSON.parse(localStorage.getItem('usersData')) || [];
     const matched = usersData.length && usersData.some(user => user.username.toLowerCase() == username && user.password == password);
     if (matched) {
@@ -369,6 +383,16 @@ function signUp(e){
         prompt.appendChild(alert);
     }
     e.preventDefault();
+    $.post(url + "/register",{fullname: fullname, username: username, password: password}, function(data){
+        console.log(data);
+        if(data.toLowerCase() === 'usercreated' ) {
+            console.log("Account created");
+        } else if(data.toLowerCase() === 'userexisted' ) {
+            console.log("Change username");
+        } else {
+            console.log("server error")
+        }
+    });
 }
 
 function logOut(e){
