@@ -145,7 +145,9 @@ app.post("/addtask", (req,res) => {
 app.post("/removetask", (req,res) => {
     const username = req.body.username.toLowerCase();
     const password = req.body.password;
-    const id = req.body.id;
+    const id = JSON.parse(req.body.id);
+    console.log(req);    
+    console.log(id);
     res.writeHead(200,
         { 'Content-Type': 'text/plain' });
     con.query(
@@ -157,13 +159,21 @@ app.post("/removetask", (req,res) => {
                 console.log(result);
                 if (result && result.length) {
                     const tableName = 'tasks_'+username;
-                    con.query(
-                        `DELETE FROM ${tableName} WHERE id = ${id}`,
-                        function (err,result) {
-                            if (err) throw err;
-                            console.log(`Removed task id ${id}`);
+                    if (Array.isArray(id)) {
+                        id.forEach(i => deleteById(tableName,`'${i}'`));
+                    } else {
+                        if (id=='all') {
+                            con.query(
+                                `DELETE FROM ${tableName}`,
+                                function (err) {
+                                    if (err) throw err;
+                                    console.log(`Removed all task, table: ${tableName}`);
+                                }
+                            );                            
+                        } else {
+                            deleteById(tableName,id);
                         }
-                    );
+                    }
                     res.end('Removed');
                 } else {
                     res.end('NotAuth');
@@ -172,6 +182,19 @@ app.post("/removetask", (req,res) => {
         }
     );    
 });
+
+function deleteById(tableName, id) {
+    con.query(
+        `DELETE FROM ${tableName} WHERE id = ${id}`,
+        function (err) {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log(`Removed task id ${id}`);
+            }
+        }
+    );
+}
 
 app.listen("5555", () => {
     console.log("Server started on port 5555");

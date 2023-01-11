@@ -139,7 +139,6 @@ function DisplayList() {
 
     var activeCount = 0;
     var doneCount = 0;
-    console.log(taskList);
     taskList.innerHTML = '';
     if (doneFilter.checked) {
         filterDone = true;
@@ -429,7 +428,7 @@ function addTask(username, password, content){
 }
 
 function removeTask(username, password, id){
-    $.post(url + "/removetask",{username: username, password: password, id: id}, function(data){
+    $.post(url + "/removetask",{username: username, password: password, id: JSON.stringify(id)}, function(data){
         console.log(data);
         if(data.toLowerCase() === 'removed' ) {
             console.log("Task Removed");
