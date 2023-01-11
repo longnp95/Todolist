@@ -110,6 +110,42 @@ app.post("/login", (req,res) => {
     );    
 });
 
+app.post("/readtasks", (req,res) => {
+    const username = req.body.username.toLowerCase();
+    const password = req.body.password;
+    res.writeHead(200,
+        { 'Content-Type': 'application/json' });
+    con.query(
+        `SELECT * FROM usersData WHERE username = '${username}' AND password = '${password}'`,
+        function (err, result){
+            if (err) {
+                console.log(err);
+            } else {
+                console.log(result);
+                if (result && result.length) {
+                    const tableName = 'tasks_'+username;
+                    con.query(
+                        `SELECT * FROM ${tableName};`,
+                        function (err,tasks) {
+                            if (err) {
+                                console.log(err);
+                                res.end();
+                            } else {
+                                console.log(`Served tasks for ${username} from table ${tableName}`);
+                                console.log(JSON.stringify(tasks));
+                                res.end(JSON.stringify(tasks));
+                            }
+                        }
+                    );
+                } else {
+                    console.log('NotAuth')
+                    res.end();
+                }
+            }
+        }
+    );    
+});
+
 app.post("/addtask", (req,res) => {
     const username = req.body.username.toLowerCase();
     const password = req.body.password;

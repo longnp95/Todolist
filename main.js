@@ -113,9 +113,19 @@ function main(){
 
 }
 
-function DisplayList() {
+async function DisplayList() {
     filename = 'tasks' + currentUsername;
     tasks = JSON.parse(localStorage.getItem(filename)) || [];   
+    if (currentUsername == ''){
+        console.log('Guest')
+    } else {
+        const data = await readTasks(currentUsername, currentPassword);
+        console.log(data[0]);
+        data.forEach(d => {
+            console.log(d.content);
+        })
+        //console.log(JSON.parse(JSON.stringify(readTasks(currentUsername, currentPassword)))||[]);
+    }
 
     if (currentUsername == '') {
         currentName = 'Guest';
@@ -438,4 +448,14 @@ function removeTask(username, password, id){
             console.log("server error")
         }
     });
+}
+
+async function readTasks(username, password){
+    tasks = []
+    await $.post(url + "/readtasks",{username: username, password: password}, function(data){
+        console.log(data);
+        tasks = data;
+    });
+    console.log(tasks);
+    return tasks;
 }
