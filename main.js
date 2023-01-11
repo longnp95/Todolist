@@ -1,10 +1,14 @@
 const url = "http://localhost:5555"
 
-function main(){
+tasks = [];
+userId = 0;
+
+async function main(){
     currentUsername = localStorage.getItem('currentUsername')||'';
     currentPassword = localStorage.getItem('currentPassword')||'';
-    filename = 'tasks' + currentUsername;
-    tasks = JSON.parse(localStorage.getItem(filename)) || [];
+    currentUserId = localStorage.getItem('currentUserId')||'';
+    isLocal = (currentUsername=='');
+    checkedId = [];
     const newTaskSubmit = this.document.getElementById('newTaskSubmit');
     const newTaskInput = document.getElementById('newTaskInput');
     searchText = document.getElementById('searchText');
@@ -14,31 +18,41 @@ function main(){
     activeFilter = document.getElementById('active');
     doneFilter = document.getElementById('done');
     currentPage = 1;
-
-    const showButton = document.getElementById('showDialog');
-    const confirmDialog = document.getElementById('confirmDialog');
-    const outputBox = document.querySelector('output');
-
-    DisplayList();
+    const confirmDialogAll = document.getElementById('confirmDialogAll');
+    const confirmDialogChecked = document.getElementById('confirmDialogChecked');
+    if (!isLocal) {
+        if (!await signIn(currentUsername, currentPassword)){
+            alert("Failed to Sign In. Showing your local todolist");
+            currentUsername = '';
+            currentPassword = '';
+            isLocal = true;
+        } else {
+            tasks = readTasks(currentUserId,currentPassword);
+        }
+    }
+    if (isLocal) {
+        tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+        DisplayList(tasks);
+    }
     newTaskSubmit.addEventListener('click', function(e){
         e.preventDefault();
         if (newTaskInput.value==''){
             console.log('no task')
         } else {
-            const task = {
-                content: newTaskInput.value,
-                done: false,
+            if (isLocal) {
+                const task = {
+                    content: newTaskInput.value,
+                    done: false,
+                }
+                tasks.push(task);
+                localStorage.setItem(filename,JSON.stringify(tasks));
+                DisplayList(tasks);
+            } else {
+                addTask(currentUserId, currentPassword, newTaskInput.value);
+                tasks = readTasks(currentUserId,currentPassword);
             }
-            tasks.push(task);
-
-            addTask(currentUsername, currentPassword, newTaskInput.value);
-
         }
-
-        localStorage.setItem(filename,JSON.stringify(tasks));
-
         newTaskInput.value='';
-        DisplayList();
     });
 
     newTaskInput.addEventListener('keydown', function(e){
@@ -47,19 +61,20 @@ function main(){
             if (newTaskInput.value==''){
                 console.log('no task')
             } else {
-                const task = {
-                    content: newTaskInput.value,
-                    done: false,
+                if (isLocal) {
+                    const task = {
+                        content: newTaskInput.value,
+                        done: false,
+                    }
+                    tasks.push(task);
+                    localStorage.setItem('tasks',JSON.stringify(tasks));
+                    DisplayList(tasks);
+                } else {
+                    addTask(currentUserId, currentPassword, newTaskInput.value);
+                    tasks = readTasks(currentUserId,currentPassword);
                 }
-                tasks.push(task);
-
-                addTask(currentUsername, currentPassword, newTaskInput.value);
-            
             }
-    
-            localStorage.setItem(filename,JSON.stringify(tasks));
             newTaskInput.value='';
-            DisplayList();
             newTaskInput.focus();
         }
     })
@@ -71,12 +86,12 @@ function main(){
     })
 
     filter.addEventListener('change', function(){
-        DisplayList();
+        DisplayList(tasks);
     })
     searchText.addEventListener('keyup', function(e){
         e.preventDefault();
         searchValue = removeVietnameseTones(searchText.value);
-        DisplayList();
+        DisplayList(tasks);
     })
 
     searchText.addEventListener('keydown', function(e){
@@ -86,61 +101,51 @@ function main(){
     })
 
 //May edit for potential removal of Done tasks
-/*     this.document.getElementById('removeChecked').addEventListener('click', function(){
-        tasks.forEach(task => {
-            if (task.done) {
-                tasks = tasks.filter(t => t!=task);
-            }
-        });
-        localStorage.setItem(filename,JSON.stringify(tasks));
-        DisplayList();
-    }) */
     this.document.getElementById('removeAll').addEventListener('click', function(){
-        confirmDialog.showModal();
-        confirmDialog.addEventListener('close', () => {
-            if (confirmDialog.returnValue=="confirmBtn") {
-                tasks = [];
-                localStorage.removeItem(filename);
-                DisplayList();
+        confirmDialogAll.showModal();
+        confirmDialogAll.addEventListener('close', () => {
+            if (confirmDialogAll.returnValue=="confirmBtn") {
+                if (isLocal) {
+                    tasks = [];
+                    localStorage.removeItem('tasks');
+                    DisplayList(tasks);
+                } else {
+                    removeTask(currentUserId, currentPassword, 'all');
+                    tasks = readTasks(currentUserId, currentPassword);
+                }
             }
         })
     })
 
     this.document.getElementById('removeChecked').addEventListener('click', function(){
-        confirmDialog.showModal();
+        confirmDialogChecked.showModal();
+        confirmDialogChecked.addEventListener('close', () => {
+            if (confirmDialogChecked.returnValue=="confirmBtn") {
+                if (!isLocal) {
+                    removeTask(currentUserId, currentPassword, checkedId);
+                    tasks = readTasks(currentUserId, currentPassword);
+                }
+            }
+        })
     })
-     
-
 }
 
-async function DisplayList() {
-    filename = 'tasks' + currentUsername;
-    tasks = JSON.parse(localStorage.getItem(filename)) || [];   
-    if (currentUsername == ''){
-        console.log('Guest')
-    } else {
-        const data = await readTasks(currentUsername, currentPassword);
-        console.log(data[0]);
-        data.forEach(d => {
-            console.log(d.content);
-        })
-        //console.log(JSON.parse(JSON.stringify(readTasks(currentUsername, currentPassword)))||[]);
-    }
-
+function DisplayList(tasksD) { 
     if (currentUsername == '') {
         currentName = 'Guest';
         document.getElementById('signInLink').style.display = 'inline';
         document.getElementById('logOutButton').style.display = 'none';
     } else {
-        const usersData = JSON.parse(localStorage.getItem('usersData')) || [];
-        currentName = usersData.find(user => user.username.toLowerCase() == currentUsername).fullname;
+        currentName = "Placeholder";
         document.getElementById('signInLink').style.display = 'none';
         document.getElementById('logOutButton').style.display = 'inline';
     }
     const welcome = document.getElementById('welcome');
     welcome.innerHTML = 'Welcome,&nbsp' + currentName;
 
-    confirmDialog.returnValue = 'cancel';
+    confirmDialogAll.returnValue = 'cancel';
+    confirmDialogChecked.returnValue = 'cancel';
+    checkedId =[];
     const itemPerPage = 10;
 
     const taskList = document.querySelector('#taskList');
@@ -161,7 +166,7 @@ async function DisplayList() {
     var indexCount = 0;
     
 
-    tasks.forEach(task => {
+    tasksD.forEach(task => {
         if (task.done) {
             doneCount++;
         } else {
@@ -222,27 +227,40 @@ async function DisplayList() {
 
         taskList.appendChild(taskEl);
 
-        document.getElementById('removeChecked').addEventListener('click', function(){
-            if (checkBox.checked) {
-                confirmDialog.addEventListener('close', () => {
-                    if (confirmDialog.returnValue=="confirmBtn") {
-                        tasks = tasks.filter(t => t!=task);
+        if (isLocal) {
+            document.getElementById('removeChecked').addEventListener('click', function(){
+                if (checkBox.checked) {
+                    confirmDialogChecked.addEventListener('close', () => {
+                        if (confirmDialogChecked.returnValue=="confirmBtn") {
+                            tasksD = tasksD.filter(t => t!=task);
+                        }
+                    localStorage.setItem('tasks',JSON.stringify(tasksD));
+                    DisplayList(tasksD);
+                    })                    
+                }
+            })
+        } else {
+            checkBox.addEventListener('change',function(){
+                if (this.checked){
+                    if (!checkedId.includes(task.id)){
+                        checkedId.push(task.id);
                     }
-                localStorage.setItem(filename,JSON.stringify(tasks));
-                DisplayList();
-                })
-                
-            }
-        })
+                } else {
+                    if (checkedId.includes(task.id)){
+                        checkedId = checkedId.filter(id => id!=task.id);
+                    }
+                }
+            })
+        }
         doneCheck.addEventListener('click', function(e){
             task.done = !task.done;
-            localStorage.setItem(filename,JSON.stringify(tasks));
+            localStorage.setItem('tasks',JSON.stringify(tasksD));
             if (task.done) {
                 content.classList.add('contentdone');
             } else {
                 content.classList.add('contentnotdone');
             }
-            DisplayList();
+            DisplayList(tasksD);
         })
 
         edit.addEventListener('click', function(e){
@@ -263,24 +281,27 @@ async function DisplayList() {
                 modify.appendChild(cancel);
                 
                 cancel.addEventListener('click', function(){
-                    DisplayList();
+                    DisplayList(tasksD);
                 })
                 save.addEventListener('click', function(e1) {
                     input.setAttribute('readonly',true);
                     task.content = input.value;
-                    localStorage.setItem(filename,JSON.stringify(tasks));
-                    DisplayList();
+                    localStorage.setItem('tasks',JSON.stringify(tasksD));
+                    DisplayList(tasksD);
                 })
             }     
             
             
         })
         remove.addEventListener('click', function(e){
-            tasks = tasks.filter(t => t!=task);
-            localStorage.setItem(filename,JSON.stringify(tasks));
-
-            //removeTask(currentUsername, currentPassword, 1);
-            DisplayList();
+            if (isLocal) {
+                tasksD = tasksD.filter(t => t!=task);
+                localStorage.setItem('tasks',JSON.stringify(tasksD));
+                DisplayList(tasksD);
+            } else {
+                removeTask(currentUserId, currentPassword, task.id);
+                tasks = readTasks(currentUserId, currentPassword);
+            }
         })
     });
     if (indexCount>itemPerPage) {
@@ -303,7 +324,7 @@ async function DisplayList() {
 
             pageIndex.addEventListener('click', function(e){
                 currentPage = i+1;
-                DisplayList();
+                DisplayList(tasksD);
             })
         }
     }
@@ -343,29 +364,21 @@ function removeVietnameseTones(str) {
     return str;
 }
 
-function signIn(e){
+async function signInButton(e){
+    e.preventDefault();
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
 
-    $.post(url + "/login",{username: username, password: password}, function(data){
-        console.log(data);
-        if(data.toLowerCase() === 'loggedin' ) {
-            console.log("Signed In");
-        } else if(data.toLowerCase() === 'notauth' ) {
-            console.log("Incorrect username/password");
-        } else {
-            console.log("server error")
-        }
-    });
-
-    const usersData = JSON.parse(localStorage.getItem('usersData')) || [];
-    const matched = usersData.length && usersData.some(user => user.username.toLowerCase() == username && user.password == password);
-    if (matched) {
+    const success = await signIn(username, password);
+    if (success) {
         currentUsername = username;
         currentPassword = password;
         localStorage.setItem('currentUsername',currentUsername);
         localStorage.setItem('currentPassword',currentPassword);
+        currentUserId = await getUserId(username, password);
+        localStorage.setItem('currentUserId', currentUserId);
         location.href = "index.html";
+        console.log('success');
     } else {
         const alert = document.createElement('p');
         const prompt = document.getElementById('alertPrompt');
@@ -374,15 +387,14 @@ function signIn(e){
         alert.classList.add('alert');
         prompt.appendChild(alert);
     }
-    e.preventDefault();
 }
 
-function signUp(e){
+async function signUpButton(e){
+    e.preventDefault();
     const fullname = document.getElementById('fullname').value;
     const username = document.getElementById('username').value.toLowerCase();
     const password = document.getElementById('password').value;
-    const usersData = JSON.parse(localStorage.getItem('usersData')) || [];
-    const matched = usersData.length && usersData.some(user => user.username.toLowerCase() == username);
+    const matched = await signUp(fullname, username, password);
     if (matched) {
         const alert = document.createElement('p');
         const prompt = document.getElementById('alertPrompt');
@@ -391,8 +403,6 @@ function signUp(e){
         alert.classList.add('alert');
         prompt.appendChild(alert);
     } else {
-        usersData.push({ fullname, username, password});
-        localStorage.setItem('usersData', JSON.stringify(usersData));
         document.querySelector('form').reset();
         document.getElementById('fullname').focus();
         const alert = document.createElement('p');
@@ -402,30 +412,68 @@ function signUp(e){
         alert.classList.add('alertBlue');
         prompt.appendChild(alert);
     }
+}
+
+function logOut(e){
+    currentUsername = '';
+    currentUserId = '';
+    currentPassword = '';
+    localStorage.setItem('currentUsername',currentUsername);
+    localStorage.setItem('currentUserId',currentUserId);
+    localStorage.setItem('currentPassword',currentPassword);
+    isLocal = true;
+    tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+    DisplayList(tasks);
     e.preventDefault();
-    $.post(url + "/register",{fullname: fullname, username: username, password: password}, function(data){
+}
+
+async function signUp(fullname,username,password) {
+    let success = false;
+    await $.post(url + "/register",{fullname: fullname, username: username, password: password}, function(data){
         console.log(data);
         if(data.toLowerCase() === 'usercreated' ) {
-            console.log("Account created");
+            success = true;
         } else if(data.toLowerCase() === 'userexisted' ) {
             console.log("Change username");
         } else {
             console.log("server error")
         }
     });
+    return success;
 }
 
-function logOut(e){
-    currentUsername = '';
-    currentPassword = '';
-    localStorage.setItem('currentUsername',currentUsername);
-    localStorage.setItem('currentPassword',currentPassword);
-    DisplayList();
-    e.preventDefault();
+async function signIn(username, password) {
+    let success = false;   
+    await $.post(url + "/login",{username: username, password: password}, function(data){
+        console.log(data);
+        if(data.toLowerCase() === 'loggedin' ) {
+            console.log("Signed In");
+            success = true;
+        } else if(data.toLowerCase() === 'notauth' ) {
+            console.log("Incorrect username/password");
+        } else {
+            console.log("server error")
+        }
+    });
+    return success;
 }
 
-function addTask(username, password, content){
-    $.post(url + "/addtask",{username: username, password: password, content: content}, function(data){
+async function getUserId(username, password) {
+    let uid = '';   
+    await $.post(url + "/getuserid",{username: username, password: password}, function(data){
+        console.log(data);
+        if(data.toLowerCase() === 'notauth' ) {
+            console.log("Incorrect username/password");
+        } else {
+            console.log(data);
+            uid = data;
+        }
+    });
+    return uid;
+}
+
+function addTask(userid, password, content){
+    $.post(url + "/addtask",{userid: userid, password: password, content: content}, function(data){
         console.log(data);
         if(data.toLowerCase() === 'added' ) {
             console.log("Task Added");
@@ -437,25 +485,26 @@ function addTask(username, password, content){
     });
 }
 
-function removeTask(username, password, id){
-    $.post(url + "/removetask",{username: username, password: password, id: JSON.stringify(id)}, function(data){
+function removeTask(userid, password, id){
+    $.post(url + "/removetask",{userid: userid, password: password, id: JSON.stringify(id)}, function(data){
         console.log(data);
         if(data.toLowerCase() === 'removed' ) {
             console.log("Task Removed");
         } else if(data.toLowerCase() === 'notauth' ) {
-            console.log("Incorrect username/password");
+            console.log("Incorrect Authentication");
         } else {
             console.log("server error")
         }
     });
 }
 
-async function readTasks(username, password){
-    tasks = []
-    await $.post(url + "/readtasks",{username: username, password: password}, function(data){
+async function readTasks(userid, password){
+    tasksF = []
+    await $.post(url + "/readtasks",{userid: userid, password: password}, function(data){
         console.log(data);
-        tasks = data;
+        tasksF = data;
     });
-    console.log(tasks);
-    return tasks;
+    console.log(tasksF);
+    DisplayList(tasksF);
+    return tasksF;
 }

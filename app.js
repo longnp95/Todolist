@@ -34,12 +34,19 @@ con.connect(function(err) {
   );
 
   con.query(
-    'CREATE TABLE IF NOT EXISTS usersData (fullname varchar(255), username varchar(255) primary key, password varchar(255));',
-    function (err, result) {
+    'CREATE TABLE IF NOT EXISTS usersData (userid INT AUTO_INCREMENT PRIMARY KEY, fullname varchar(255), username varchar(255), password varchar(255));',
+    function (err) {
         if (err) throw err;
         console.log("Users Data Initialized");
     }
   );
+  con.query(
+    `CREATE TABLE IF NOT EXISTS tasksData (id INT AUTO_INCREMENT PRIMARY KEY, userid INT, content VARCHAR(1023), done BOOLEAN);`,
+    function (err) {
+        if (err) throw err;
+        console.log('Tasks table initialized.');
+    }
+);
 });
 
 app.use(express.static(__dirname));
@@ -93,14 +100,6 @@ app.post("/login", (req,res) => {
             } else {
                 console.log(result);
                 if (result && result.length) {
-                    const tableName = 'tasks_'+username;
-                    con.query(
-                        `CREATE TABLE IF NOT EXISTS ${tableName} (id INT AUTO_INCREMENT PRIMARY KEY, content VARCHAR(1023), done BOOLEAN);`,
-                        function (err,result) {
-                            if (err) throw err;
-                            console.log(`${username}'s to-do table initialized.`);
-                        }
-                    );
                     res.end('LoggedIn');
                 } else {
                     res.end('NotAuth');
@@ -110,11 +109,11 @@ app.post("/login", (req,res) => {
     );    
 });
 
-app.post("/readtasks", (req,res) => {
+app.post("/getuserid", (req,res) => {
     const username = req.body.username.toLowerCase();
     const password = req.body.password;
     res.writeHead(200,
-        { 'Content-Type': 'application/json' });
+        { 'Content-Type': 'text/plain' });
     con.query(
         `SELECT * FROM usersData WHERE username = '${username}' AND password = '${password}'`,
         function (err, result){
@@ -123,16 +122,37 @@ app.post("/readtasks", (req,res) => {
             } else {
                 console.log(result);
                 if (result && result.length) {
-                    const tableName = 'tasks_'+username;
+                    res.end(`${result[0].userid}`);
+                } else {
+                    res.end('NotAuth');
+                }
+            }
+        }
+    );    
+});
+
+app.post("/readtasks", (req,res) => {
+    const userId = req.body.userid;
+    const password = req.body.password;
+    console.log(userId);
+    res.writeHead(200,
+        { 'Content-Type': 'application/json' });
+    con.query(
+        `SELECT * FROM usersData WHERE userid = ${userId} AND password = '${password}'`,
+        function (err, result){
+            if (err) {
+                console.log(err);
+            } else {
+                console.log(result);
+                if (result && result.length) {
                     con.query(
-                        `SELECT * FROM ${tableName};`,
+                        `SELECT * FROM tasksData WHERE userid = '${userId}';`,
                         function (err,tasks) {
                             if (err) {
                                 console.log(err);
                                 res.end();
                             } else {
-                                console.log(`Served tasks for ${username} from table ${tableName}`);
-                                console.log(JSON.stringify(tasks));
+                                console.log(`Served tasks for userId ${userId} from table tasksData`);
                                 res.end(JSON.stringify(tasks));
                             }
                         }
@@ -147,8 +167,40 @@ app.post("/readtasks", (req,res) => {
 });
 
 app.post("/addtask", (req,res) => {
+    const userid = req.body.userid.toLowerCase();
+    const password = req.body.password;
+    const content = req.body.content;
+    res.writeHead(200,
+        { 'Content-Type': 'text/plain' });
+    con.query(
+        `SELECT * FROM usersData WHERE userid = '${userid}' AND password = '${password}'`,
+        function (err, result){
+            if (err) {
+                console.log(err);
+            } else {
+                console.log(result);
+                if (result && result.length) {
+                    con.query(
+                        `INSERT INTO tasksData (userid, content, done) VALUES `+
+                        `('${userid}', '${content}', false)`,
+                        function (err,result) {
+                            if (err) throw err;
+                            console.log(`${content} added to To-do list`);
+                        }
+                    );
+                    res.end('Added');
+                } else {
+                    res.end('NotAuth');
+                }
+            }
+        }
+    );    
+});
+
+/* app.post("/edittask", (req,res) => {
     const username = req.body.username.toLowerCase();
     const password = req.body.password;
+    const id = req.body.id;
     const content = req.body.content;
     res.writeHead(200,
         { 'Content-Type': 'text/plain' });
@@ -177,37 +229,35 @@ app.post("/addtask", (req,res) => {
         }
     );    
 });
-
+ */
 app.post("/removetask", (req,res) => {
-    const username = req.body.username.toLowerCase();
+    const userid = req.body.userid.toLowerCase();
     const password = req.body.password;
     const id = JSON.parse(req.body.id);
-    console.log(req);    
     console.log(id);
     res.writeHead(200,
         { 'Content-Type': 'text/plain' });
     con.query(
-        `SELECT * FROM usersData WHERE username = '${username}' AND password = '${password}'`,
+        `SELECT * FROM usersData WHERE userid = '${userid}' AND password = '${password}'`,
         function (err, result){
             if (err) {
                 console.log(err);
             } else {
                 console.log(result);
                 if (result && result.length) {
-                    const tableName = 'tasks_'+username;
                     if (Array.isArray(id)) {
-                        id.forEach(i => deleteById(tableName,`'${i}'`));
+                        id.forEach(i => deleteById(userid,`'${i}'`));
                     } else {
                         if (id=='all') {
                             con.query(
-                                `DELETE FROM ${tableName}`,
+                                `DELETE FROM tasksData WHERE userid = '${userid}'`,
                                 function (err) {
                                     if (err) throw err;
-                                    console.log(`Removed all task, table: ${tableName}`);
+                                    console.log(`Removed all task, user: ${userid}`);
                                 }
                             );                            
                         } else {
-                            deleteById(tableName,id);
+                            deleteById(userid,id);
                         }
                     }
                     res.end('Removed');
@@ -219,9 +269,9 @@ app.post("/removetask", (req,res) => {
     );    
 });
 
-function deleteById(tableName, id) {
+function deleteById(userid, id) {
     con.query(
-        `DELETE FROM ${tableName} WHERE id = ${id}`,
+        `DELETE FROM tasksData WHERE userid = '${userid}' AND id = ${id}`,
         function (err) {
             if (err) {
                 console.log(err);

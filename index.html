@@ -69,12 +69,22 @@
             <button id="newTaskSubmit">Add</button>
         </div>
 
-        <dialog id="confirmDialog">
+        <dialog class="confirmDialog" id="confirmDialogAll">
             <p>Are you sure?</p>
             <form method="dialog">
             <div>
                 <button class="cancel" value="cancel">Cancel</button>
-                <button id="confirmBtn" value="confirmBtn">Confirm</button>
+                <button class=confirmBtn id="confirmBtnAll" value="confirmBtn">Confirm</button>
+            </div>
+            </form>
+        </dialog>
+
+        <dialog class="confirmDialog" id="confirmDialogChecked">
+            <p>Are you sure?</p>
+            <form method="dialog">
+            <div>
+                <button class="cancel" value="cancel">Cancel</button>
+                <button class=confirmBtn id="confirmBtnChecked" value="confirmBtn">Confirm</button>
             </div>
             </form>
         </dialog>
