@@ -2,6 +2,7 @@ const url = "http://localhost:5555"
 
 function main(){
     currentUsername = localStorage.getItem('currentUsername')||'';
+    currentPassword = localStorage.getItem('currentPassword')||'';
     filename = 'tasks' + currentUsername;
     tasks = JSON.parse(localStorage.getItem(filename)) || [];
     const newTaskSubmit = this.document.getElementById('newTaskSubmit');
@@ -29,6 +30,9 @@ function main(){
                 done: false,
             }
             tasks.push(task);
+
+            addTask(currentUsername, currentPassword, newTaskInput.value);
+
         }
 
         localStorage.setItem(filename,JSON.stringify(tasks));
@@ -48,6 +52,9 @@ function main(){
                     done: false,
                 }
                 tasks.push(task);
+
+                addTask(currentUsername, currentPassword, newTaskInput.value);
+            
             }
     
             localStorage.setItem(filename,JSON.stringify(tasks));
@@ -262,6 +269,8 @@ function DisplayList() {
         remove.addEventListener('click', function(e){
             tasks = tasks.filter(t => t!=task);
             localStorage.setItem(filename,JSON.stringify(tasks));
+
+            //removeTask(currentUsername, currentPassword, 1);
             DisplayList();
         })
     });
@@ -344,7 +353,9 @@ function signIn(e){
     const matched = usersData.length && usersData.some(user => user.username.toLowerCase() == username && user.password == password);
     if (matched) {
         currentUsername = username;
+        currentPassword = password;
         localStorage.setItem('currentUsername',currentUsername);
+        localStorage.setItem('currentPassword',currentPassword);
         location.href = "index.html";
     } else {
         const alert = document.createElement('p');
@@ -397,7 +408,35 @@ function signUp(e){
 
 function logOut(e){
     currentUsername = '';
+    currentPassword = '';
     localStorage.setItem('currentUsername',currentUsername);
+    localStorage.setItem('currentPassword',currentPassword);
     DisplayList();
     e.preventDefault();
+}
+
+function addTask(username, password, content){
+    $.post(url + "/addtask",{username: username, password: password, content: content}, function(data){
+        console.log(data);
+        if(data.toLowerCase() === 'added' ) {
+            console.log("Task Added");
+        } else if(data.toLowerCase() === 'notauth' ) {
+            console.log("Incorrect username/password");
+        } else {
+            console.log("server error")
+        }
+    });
+}
+
+function removeTask(username, password, id){
+    $.post(url + "/removetask",{username: username, password: password, id: id}, function(data){
+        console.log(data);
+        if(data.toLowerCase() === 'removed' ) {
+            console.log("Task Removed");
+        } else if(data.toLowerCase() === 'notauth' ) {
+            console.log("Incorrect username/password");
+        } else {
+            console.log("server error")
+        }
+    });
 }

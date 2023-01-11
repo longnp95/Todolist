@@ -110,8 +110,68 @@ app.post("/login", (req,res) => {
     );    
 });
 
+app.post("/addtask", (req,res) => {
+    const username = req.body.username.toLowerCase();
+    const password = req.body.password;
+    const content = req.body.content;
+    res.writeHead(200,
+        { 'Content-Type': 'text/plain' });
+    con.query(
+        `SELECT * FROM usersData WHERE username = '${username}' AND password = '${password}'`,
+        function (err, result){
+            if (err) {
+                console.log(err);
+            } else {
+                console.log(result);
+                if (result && result.length) {
+                    const tableName = 'tasks_'+username;
+                    con.query(
+                        `INSERT INTO ${tableName} (content, done) VALUES `+
+                        `('${content}', false)`,
+                        function (err,result) {
+                            if (err) throw err;
+                            console.log(`${content} added to To-do list`);
+                        }
+                    );
+                    res.end('Added');
+                } else {
+                    res.end('NotAuth');
+                }
+            }
+        }
+    );    
+});
 
-
+app.post("/removetask", (req,res) => {
+    const username = req.body.username.toLowerCase();
+    const password = req.body.password;
+    const id = req.body.id;
+    res.writeHead(200,
+        { 'Content-Type': 'text/plain' });
+    con.query(
+        `SELECT * FROM usersData WHERE username = '${username}' AND password = '${password}'`,
+        function (err, result){
+            if (err) {
+                console.log(err);
+            } else {
+                console.log(result);
+                if (result && result.length) {
+                    const tableName = 'tasks_'+username;
+                    con.query(
+                        `DELETE FROM ${tableName} WHERE id = ${id}`,
+                        function (err,result) {
+                            if (err) throw err;
+                            console.log(`Removed task id ${id}`);
+                        }
+                    );
+                    res.end('Removed');
+                } else {
+                    res.end('NotAuth');
+                }
+            }
+        }
+    );    
+});
 
 app.listen("5555", () => {
     console.log("Server started on port 5555");
