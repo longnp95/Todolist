@@ -3,6 +3,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const router = express.Router();
 const app = express();
+const port = process.env.PORT || 5555;
 app.use("/",router);
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(bodyParser.json())
@@ -312,6 +313,6 @@ function deleteById(userid, id) {
     );
 }
 
-app.listen("5555", () => {
-    console.log("Server started on port 5555");
+app.listen(port, () => {
+    console.log(`Server started on port ${port}`);
 });
