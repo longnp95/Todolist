@@ -136,7 +136,7 @@ function DisplayList(tasksD) {
         document.getElementById('signInLink').style.display = 'inline';
         document.getElementById('logOutButton').style.display = 'none';
     } else {
-        currentName = "Placeholder";
+        currentName = localStorage.getItem('currentName');
         document.getElementById('signInLink').style.display = 'none';
         document.getElementById('logOutButton').style.display = 'inline';
     }
@@ -254,13 +254,18 @@ function DisplayList(tasksD) {
         }
         doneCheck.addEventListener('click', function(e){
             task.done = !task.done;
-            localStorage.setItem('tasks',JSON.stringify(tasksD));
             if (task.done) {
                 content.classList.add('contentdone');
             } else {
                 content.classList.add('contentnotdone');
             }
-            DisplayList(tasksD);
+            if (isLocal){
+                localStorage.setItem('tasks',JSON.stringify(tasksD));
+                DisplayList(tasksD);
+            } else {
+                taskCompletion(currentUserId, currentPassword, task.id, task.done);
+                tasks = readTasks(currentUserId,currentPassword);
+            }
         })
 
         edit.addEventListener('click', function(e){
@@ -285,9 +290,14 @@ function DisplayList(tasksD) {
                 })
                 save.addEventListener('click', function(e1) {
                     input.setAttribute('readonly',true);
-                    task.content = input.value;
-                    localStorage.setItem('tasks',JSON.stringify(tasksD));
-                    DisplayList(tasksD);
+                    if (isLocal) {
+                        task.content = input.value;
+                        localStorage.setItem('tasks',JSON.stringify(tasksD));
+                        DisplayList(tasksD);
+                    } else {
+                        editTask(currentUserId, currentPassword, task.id, input.value);
+                        tasks = readTasks(currentUserId, currentPassword);
+                    }
                 })
             }     
             
@@ -375,8 +385,11 @@ async function signInButton(e){
         currentPassword = password;
         localStorage.setItem('currentUsername',currentUsername);
         localStorage.setItem('currentPassword',currentPassword);
-        currentUserId = await getUserId(username, password);
+        userData = await getUser(username, password);
+        currentUserId = userData.userid;
+        currentName = userData.fullname;
         localStorage.setItem('currentUserId', currentUserId);
+        localStorage.setItem('currentName', currentName);
         location.href = "index.html";
         console.log('success');
     } else {
@@ -395,7 +408,7 @@ async function signUpButton(e){
     const username = document.getElementById('username').value.toLowerCase();
     const password = document.getElementById('password').value;
     const matched = await signUp(fullname, username, password);
-    if (matched) {
+    if (!matched) {
         const alert = document.createElement('p');
         const prompt = document.getElementById('alertPrompt');
         prompt.innerHTML = '';
@@ -417,9 +430,11 @@ async function signUpButton(e){
 function logOut(e){
     currentUsername = '';
     currentUserId = '';
+    currentName = 'Guest';
     currentPassword = '';
     localStorage.setItem('currentUsername',currentUsername);
     localStorage.setItem('currentUserId',currentUserId);
+    localStorage.setItem('currentName',currentName);
     localStorage.setItem('currentPassword',currentPassword);
     isLocal = true;
     tasks = JSON.parse(localStorage.getItem('tasks')) || [];
@@ -458,16 +473,10 @@ async function signIn(username, password) {
     return success;
 }
 
-async function getUserId(username, password) {
-    let uid = '';   
-    await $.post(url + "/getuserid",{username: username, password: password}, function(data){
+async function getUser(username, password) {
+    await $.post(url + "/getuser",{username: username, password: password}, function(data){
         console.log(data);
-        if(data.toLowerCase() === 'notauth' ) {
-            console.log("Incorrect username/password");
-        } else {
-            console.log(data);
-            uid = data;
-        }
+        uid = data;
     });
     return uid;
 }
@@ -477,6 +486,32 @@ function addTask(userid, password, content){
         console.log(data);
         if(data.toLowerCase() === 'added' ) {
             console.log("Task Added");
+        } else if(data.toLowerCase() === 'notauth' ) {
+            console.log("Incorrect username/password");
+        } else {
+            console.log("server error")
+        }
+    });
+}
+
+function editTask(userid, password, id, content){
+    $.post(url + "/edittask",{userid: userid, password: password, id: id, content: content}, function(data){
+        console.log(data);
+        if(data.toLowerCase() === 'edited' ) {
+            console.log("Task Edited");
+        } else if(data.toLowerCase() === 'notauth' ) {
+            console.log("Incorrect username/password");
+        } else {
+            console.log("server error")
+        }
+    });
+}
+
+function taskCompletion(userid, password, id, done){
+    $.post(url + "/taskcompletion",{userid: userid, password: password, id: id, done: done}, function(data){
+        console.log(data);
+        if(data.toLowerCase() === 'edited' ) {
+            console.log("Task Edited");
         } else if(data.toLowerCase() === 'notauth' ) {
             console.log("Incorrect username/password");
         } else {

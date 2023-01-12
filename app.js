@@ -109,11 +109,11 @@ app.post("/login", (req,res) => {
     );    
 });
 
-app.post("/getuserid", (req,res) => {
+app.post("/getuser", (req,res) => {
     const username = req.body.username.toLowerCase();
     const password = req.body.password;
     res.writeHead(200,
-        { 'Content-Type': 'text/plain' });
+        { 'Content-Type': 'application/json' });
     con.query(
         `SELECT * FROM usersData WHERE username = '${username}' AND password = '${password}'`,
         function (err, result){
@@ -122,9 +122,10 @@ app.post("/getuserid", (req,res) => {
             } else {
                 console.log(result);
                 if (result && result.length) {
-                    res.end(`${result[0].userid}`);
+                    res.end(JSON.stringify({userid: result[0].userid, fullname: result[0].fullname}));
                 } else {
-                    res.end('NotAuth');
+                    console.log('notauth')
+                    res.end();
                 }
             }
         }
@@ -138,7 +139,7 @@ app.post("/readtasks", (req,res) => {
     res.writeHead(200,
         { 'Content-Type': 'application/json' });
     con.query(
-        `SELECT * FROM usersData WHERE userid = ${userId} AND password = '${password}'`,
+        `SELECT * FROM usersData WHERE userid = '${userId}' AND password = '${password}'`,
         function (err, result){
             if (err) {
                 console.log(err);
@@ -167,7 +168,7 @@ app.post("/readtasks", (req,res) => {
 });
 
 app.post("/addtask", (req,res) => {
-    const userid = req.body.userid.toLowerCase();
+    const userid = req.body.userid;
     const password = req.body.password;
     const content = req.body.content;
     res.writeHead(200,
@@ -197,31 +198,29 @@ app.post("/addtask", (req,res) => {
     );    
 });
 
-/* app.post("/edittask", (req,res) => {
-    const username = req.body.username.toLowerCase();
+app.post("/edittask", (req,res) => {
+    const userid = req.body.userid;
     const password = req.body.password;
     const id = req.body.id;
     const content = req.body.content;
     res.writeHead(200,
         { 'Content-Type': 'text/plain' });
     con.query(
-        `SELECT * FROM usersData WHERE username = '${username}' AND password = '${password}'`,
+        `SELECT * FROM usersData WHERE userid = '${userid}' AND password = '${password}'`,
         function (err, result){
             if (err) {
                 console.log(err);
             } else {
                 console.log(result);
                 if (result && result.length) {
-                    const tableName = 'tasks_'+username;
                     con.query(
-                        `INSERT INTO ${tableName} (content, done) VALUES `+
-                        `('${content}', false)`,
+                        `UPDATE tasksData SET content = '${content}' WHERE userid = '${userid}' AND id='${id}'`,
                         function (err,result) {
                             if (err) throw err;
-                            console.log(`${content} added to To-do list`);
+                            console.log(`Task id:${id} changed to '${content}'`);
                         }
                     );
-                    res.end('Added');
+                    res.end('Edited');
                 } else {
                     res.end('NotAuth');
                 }
@@ -229,9 +228,40 @@ app.post("/addtask", (req,res) => {
         }
     );    
 });
- */
+
+app.post("/taskcompletion", (req,res) => {
+    const userid = req.body.userid;
+    const password = req.body.password;
+    const id = req.body.id;
+    const done = req.body.done;
+    res.writeHead(200,
+        { 'Content-Type': 'text/plain' });
+    con.query(
+        `SELECT * FROM usersData WHERE userid = '${userid}' AND password = '${password}'`,
+        function (err, result){
+            if (err) {
+                console.log(err);
+            } else {
+                console.log(result);
+                if (result && result.length) {
+                    con.query(
+                        `UPDATE tasksData SET done = ${done} WHERE userid = '${userid}' AND id='${id}'`,
+                        function (err,result) {
+                            if (err) throw err;
+                            console.log(`Task id:${id} changed to done: ${done}`);
+                        }
+                    );
+                    res.end('Edited');
+                } else {
+                    res.end('NotAuth');
+                }
+            }
+        }
+    );    
+});
+
 app.post("/removetask", (req,res) => {
-    const userid = req.body.userid.toLowerCase();
+    const userid = req.body.userid;
     const password = req.body.password;
     const id = JSON.parse(req.body.id);
     console.log(id);
